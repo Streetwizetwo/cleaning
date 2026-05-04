@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Duties — Home Care Checklist</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Cormorant+Garamond:wght@300;400;500&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Cormorant Garamond', serif; background: #0f0d0a; min-height: 100vh; color: #e8e0d0; }
+  .wrap { padding: 40px 28px 60px; position: relative; overflow: hidden; }
+  .content { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; }
+  .header { text-align: center; margin-bottom: 44px; padding-bottom: 32px; border-bottom: 0.5px solid rgba(232,224,208,0.15); }
+  .date-line { font-size: 11px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; color: #9d8f78; margin-bottom: 16px; }
+  .title { font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 400; color: #f0e8d8; line-height: 1.1; margin-bottom: 6px; }
+  .subtitle { font-size: 15px; font-weight: 300; color: #7a6f5e; letter-spacing: 2px; font-style: italic; }
+  .sync-status { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-size: 12px; letter-spacing: 1.5px; color: #7a6f5e; font-style: italic; }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: #5a4f3e; transition: background 0.3s; flex-shrink: 0; }
+  .sync-dot.synced { background: #7a9e6e; }
+  .sync-dot.syncing { background: #c9a96e; animation: pulse 0.8s infinite; }
+  .sync-dot.error { background: #c96e6e; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* Tab Navigation */
+  .tabs { display: flex; justify-content: center; gap: 4px; margin-bottom: 32px; border-bottom: 0.5px solid rgba(232,224,208,0.1); padding-bottom: 0; }
+  .tab-btn { background: transparent; border: none; color: #5a4f3e; font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; padding: 10px 20px; cursor: pointer; position: relative; transition: color 0.3s; }
+  .tab-btn.active { color: #c9a96e; }
+  .tab-btn.active::after { content: ''; position: absolute; bottom: -0.5px; left: 10%; width: 80%; height: 1.5px; background: #c9a96e; }
+  .tab-btn:hover { color: #9d8f78; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .section-label { font-size: 10px; letter-spacing: 3.5px; text-transform: uppercase; color: #7a6f5e; font-weight: 400; padding: 24px 0 10px; display: flex; align-items: center; gap: 12px; }
+  .section-label::after { content: ''; flex: 1; height: 0.5px; background: rgba(232,224,208,0.12); }
+  .task-row { display: flex; align-items: flex-start; gap: 16px; padding: 13px 8px; border-bottom: 0.5px solid rgba(232,224,208,0.07); cursor: pointer; transition: background 0.2s; border-radius: 4px; user-select: none; }
+  .task-row:hover { background: rgba(232,224,208,0.04); }
+  .task-row.done .task-text { text-decoration: line-through; color: #4a4235; }
+  .task-row.done .check-box { background: #c9a96e; border-color: #c9a96e; }
+  .task-row.done .check-box::after { opacity: 1; }
+  .task-row.done .num { color: #4a4235; }
+  .num { font-family: 'Playfair Display', serif; font-size: 11px; color: #5a4f3e; min-width: 18px; padding-top: 3px; font-style: italic; }
+  .check-box { width: 18px; height: 18px; border: 0.5px solid rgba(232,224,208,0.25); border-radius: 2px; flex-shrink: 0; margin-top: 2px; position: relative; transition: all 0.2s; }
+  .check-box::after { content: ''; position: absolute; left: 5px; top: 2px; width: 5px; height: 9px; border-right: 1.5px solid #0f0d0a; border-bottom: 1.5px solid #0f0d0a; transform: rotate(45deg); opacity: 0; transition: opacity 0.15s; }
+  .task-text { font-size: 16px; font-weight: 400; color: #d4c9b4; line-height: 1.5; flex: 1; transition: color 0.2s; }
+  .task-note { font-size: 12px; font-weight: 300; color: #7a6f5e; font-style: italic; margin-top: 3px; }
+  .progress-wrap { margin-top: 44px; padding-top: 28px; border-top: 0.5px solid rgba(232,224,208,0.12); display: flex; align-items: center; gap: 20px; }
+  .progress-bar-bg { flex: 1; height: 2px; background: rgba(232,224,208,0.1); border-radius: 2px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #c9a96e, #e8d5a3); border-radius: 2px; transition: width 0.4s ease; }
+  .progress-text { font-size: 12px; letter-spacing: 2px; color: #7a6f5e; font-style: italic; white-space: nowrap; }
+  .gold { color: #c9a96e; }
+  .ornament { text-align: center; color: #3a3025; font-size: 20px; margin: 32px 0 0; letter-spacing: 8px; }
+  .reset-btn { display: block; margin: 24px auto 0; background: transparent; border: 0.5px solid rgba(232,224,208,0.15); color: #7a6f5e; font-family: 'Cormorant Garamond', serif; font-size: 12px; letter-spacing: 2px; padding: 8px 20px; border-radius: 2px; cursor: pointer; font-style: italic; transition: all 0.2s; }
+  .reset-btn:hover { border-color: rgba(232,224,208,0.35); color: #d4c9b4; }
+
+  /* ===== STATISTICS & REPORTS ===== */
+  .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card { background: rgba(232,224,208,0.03); border: 0.5px solid rgba(232,224,208,0.08); border-radius: 6px; padding: 20px 16px; text-align: center; transition: border-color 0.3s; }
+  .stat-card:hover { border-color: rgba(201,169,110,0.2); }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 32px; color: #c9a96e; line-height: 1; margin-bottom: 6px; }
+  .stat-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #7a6f5e; }
+  .stat-sub { font-size: 12px; color: #5a4f3e; font-style: italic; margin-top: 4px; }
+
+  .chart-container { background: rgba(232,224,208,0.02); border: 0.5px solid rgba(232,224,208,0.08); border-radius: 6px; padding: 24px; margin-bottom: 24px; }
+  .chart-title { font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; color: #7a6f5e; margin-bottom: 20px; text-align: center; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 160px; padding-bottom: 28px; position: relative; }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; }
+  .bar { width: 100%; max-width: 32px; background: linear-gradient(180deg, #c9a96e, #7a6f5e); border-radius: 2px 2px 0 0; transition: height 0.6s ease; min-height: 2px; position: relative; }
+  .bar-label { font-size: 10px; color: #5a4f3e; letter-spacing: 1px; position: absolute; bottom: -22px; white-space: nowrap; }
+  .bar-value { font-size: 10px; color: #c9a96e; position: absolute; top: -16px; opacity: 0; transition: opacity 0.3s; }
+  .bar-group:hover .bar-value { opacity: 1; }
+
+  .section-breakdown { margin-bottom: 24px; }
+  .breakdown-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid rgba(232,224,208,0.06); }
+  .breakdown-name { flex: 1; font-size: 14px; color: #9d8f78; }
+  .breakdown-bar-wrap { flex: 2; height: 6px; background: rgba(232,224,208,0.06); border-radius: 3px; overflow: hidden; }
+  .breakdown-bar { height: 100%; background: linear-gradient(90deg, #c9a96e, #e8d5a3); border-radius: 3px; transition: width 0.5s ease; }
+  .breakdown-pct { font-size: 13px; color: #c9a96e; min-width: 36px; text-align: right; font-family: 'Playfair Display', serif; }
+
+  .history-list { max-height: 320px; overflow-y: auto; }
+  .history-list::-webkit-scrollbar { width: 4px; }
+  .history-list::-webkit-scrollbar-track { background: transparent; }
+  .history-list::-webkit-scrollbar-thumb { background: rgba(232,224,208,0.1); border-radius: 2px; }
+  .history-item { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 0.5px solid rgba(232,224,208,0.06); }
+  .history-date { font-size: 12px; color: #9d8f78; min-width: 100px; letter-spacing: 1px; }
+  .history-bar-bg { flex: 1; height: 4px; background: rgba(232,224,208,0.06); border-radius: 2px; overflow: hidden; }
+  .history-bar { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+  .history-bar.good { background: #7a9e6e; }
+  .history-bar.mid { background: #c9a96e; }
+  .history-bar.low { background: #c96e6e; }
+  .history-pct { font-size: 13px; color: #c9a96e; min-width: 40px; text-align: right; font-family: 'Playfair Display', serif; }
+
+  .streak-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(201,169,110,0.08); border: 0.5px solid rgba(201,169,110,0.2); border-radius: 20px; padding: 6px 14px; margin: 0 auto 24px; }
+  .streak-badge span { font-size: 13px; color: #c9a96e; letter-spacing: 1px; }
+  .streak-badge .flame { font-size: 14px; }
+
+  .empty-state { text-align: center; padding: 48px 20px; color: #5a4f3e; font-style: italic; font-size: 14px; letter-spacing: 1px; }
+
+  .task-detail-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 0.5px solid rgba(232,224,208,0.05); }
+  .task-detail-name { flex: 1; font-size: 13px; color: #9d8f78; }
+  .task-detail-bar-wrap { flex: 1; height: 4px; background: rgba(232,224,208,0.06); border-radius: 2px; overflow: hidden; }
+  .task-detail-bar { height: 100%; background: linear-gradient(90deg, #c9a96e, #e8d5a3); border-radius: 2px; transition: width 0.4s ease; }
+  .task-detail-count { font-size: 12px; color: #c9a96e; min-width: 30px; text-align: right; }
+
+  @media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .title { font-size: 28px; }
+    .wrap { padding: 24px 16px 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="content">
+    <div class="header">
+      <div class="date-line" id="date-out"></div>
+      <div class="title">Daily <span class="gold">Duties</span></div>
+      <div class="subtitle">Home Care Checklist</div>
+      <div class="sync-status">
+        <div class="sync-dot" id="sync-dot"></div>
+        <span id="sync-label">Connecting...</span>
+      </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="checklist">Checklist</button>
+      <button class="tab-btn" data-tab="stats">Statistics</button>
+      <button class="tab-btn" data-tab="reports">Reports</button>
+    </div>
+
+    <!-- CHECKLIST TAB -->
+    <div class="tab-panel active" id="panel-checklist">
+      <div id="task-list"></div>
+      <div class="progress-wrap">
+        <div class="progress-text" id="prog-text">0 of 19 complete</div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-bar" style="width:0%"></div></div>
+      </div>
+      <button class="reset-btn" id="reset-btn">Reset all tasks</button>
+    </div>
+
+    <!-- STATISTICS TAB -->
+    <div class="tab-panel" id="panel-stats">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total-days">0</div>
+          <div class="stat-label">Days Tracked</div>
+          <div class="stat-sub">since first use</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-avg-completion">0%</div>
+          <div class="stat-label">Avg Completion</div>
+          <div class="stat-sub">all-time average</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-best-day">0%</div>
+          <div class="stat-label">Best Day</div>
+          <div class="stat-sub" id="stat-best-date">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-current-streak">0</div>
+          <div class="stat-label">Current Streak</div>
+          <div class="stat-sub">consecutive days</div>
+        </div>
+      </div>
+
+      <div class="streak-badge" id="streak-badge" style="display:none;">
+        <span class="flame">🔥</span>
+        <span id="streak-text">0 day streak</span>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-title">Last 7 Days</div>
+        <div class="bar-chart" id="weekly-chart"></div>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-title">Completion by Section</div>
+        <div class="section-breakdown" id="section-breakdown"></div>
+      </div>
+    </div>
+
+    <!-- REPORTS TAB -->
+    <div class="tab-panel" id="panel-reports">
+      <div class="chart-container">
+        <div class="chart-title">30-Day History</div>
+        <div class="history-list" id="history-list">
+          <div class="empty-state">Loading history...</div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-title">Most & Least Completed Tasks</div>
+        <div id="task-rankings"></div>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-title">Weekly Summary</div>
+        <div id="weekly-summary"></div>
+      </div>
+    </div>
+
+    <div class="ornament">— ✦ —</div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBQxwUjSAgDCOoVGYZVfRI4R0_DuMcjnRY",
+  authDomain: "cleaning-edc3b.firebaseapp.com",
+  projectId: "cleaning-edc3b",
+  storageBucket: "cleaning-edc3b.firebasestorage.app",
+  messagingSenderId: "241675566630",
+  appId: "1:241675566630:web:11e9063021285e95b770e7"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const DOC_ID = "daily-checklist";
+const docRef = doc(db, "checklists", DOC_ID);
+const historyRef = collection(db, "checklists", DOC_ID, "history");
+
+const sections = [
+  { label: "Morning — Dishes & Laundry", tasks: [
+    { id: "t01", text: "Wash all dishes", note: null },
+    { id: "t02", text: "Hand washing of delicate items", note: null },
+    { id: "t03", text: "Hang clothes out to dry", note: null },
+  ]},
+  { label: "Bedrooms", tasks: [
+    { id: "t04", text: "Clean main bedroom — general tidy", note: null },
+    { id: "t05", text: "Change all bedding in main bedroom", note: null },
+    { id: "t06", text: "Room 2 — general cleaning and tidying up", note: null },
+  ]},
+  { label: "Living Areas", tasks: [
+    { id: "t07", text: "Sweep and mop lounge", note: null },
+    { id: "t08", text: "Wipe down couches", note: null },
+    { id: "t09", text: "Clean the coffee table", note: null },
+    { id: "t10", text: "Wash place mats in the kitchen", note: null },
+  ]},
+  { label: "Bathroom", tasks: [
+    { id: "t11", text: "Remove and treat mold", note: null },
+    { id: "t12", text: "Clean shower door glass", note: null },
+    { id: "t13", text: "Clean the sink", note: null },
+    { id: "t14", text: "Scrub all tiles", note: null },
+  ]},
+  { label: "Kitchen — Appliances & Fridge", tasks: [
+    { id: "t15", text: "Clean fridge — remove all items, wipe inside, discard old food", note: "Check with mam before throwing anything away" },
+    { id: "t16", text: "Clean air fryer — wipe inside and outside", note: null },
+    { id: "t17", text: "Clean microwave — inside and outside", note: null },
+    { id: "t18", text: "Wipe kettle and all other kitchen appliances", note: null },
+  ]},
+  { label: "Outdoors", tasks: [
+    { id: "t19", text: "Sweep and mop outside by clothes line and washing stone area", note: null },
+  ]},
+];
+
+const allTasks = sections.flatMap(s => s.tasks);
+const total = allTasks.length;
+let state = {};
+let ignoreSnapshot = false;
+let historyData = [];
+
+const syncDot = document.getElementById('sync-dot');
+const syncLabel = document.getElementById('sync-label');
+const progBar = document.getElementById('prog-bar');
+const progText = document.getElementById('prog-text');
+const listEl = document.getElementById('task-list');
+
+document.getElementById('date-out').textContent = new Date().toLocaleDateString('en-ZA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+// ===== TAB SWITCHING =====
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'stats') renderStats();
+    if (btn.dataset.tab === 'reports') renderReports();
+  });
+});
+
+function setSyncState(s) {
+  syncDot.className = 'sync-dot ' + s;
+  syncLabel.textContent = s === 'synced' ? 'Saved to cloud' : s === 'syncing' ? 'Saving...' : s === 'error' ? 'Save failed' : 'Connecting...';
+}
+
+function updateProgress() {
+  const done = Object.values(state).filter(Boolean).length;
+  const pct = Math.round((done / total) * 100);
+  progBar.style.width = pct + '%';
+  progText.textContent = done + ' of ' + total + ' complete';
+}
+
+function applyState() {
+  allTasks.forEach(task => {
+    const row = document.getElementById('row-' + task.id);
+    if (!row) return;
+    if (state[task.id]) row.classList.add('done');
+    else row.classList.remove('done');
+  });
+  updateProgress();
+}
+
+async function saveState() {
+  setSyncState('syncing');
+  ignoreSnapshot = true;
+  try {
+    await setDoc(docRef, { tasks: state, updatedAt: new Date().toISOString() });
+    setSyncState('synced');
+  } catch(e) {
+    setSyncState('error');
+    console.error(e);
+  }
+  setTimeout(() => { ignoreSnapshot = false; }, 1000);
+}
+
+async function archiveDay() {
+  const todayKey = new Date().toISOString().split('T')[0];
+  const done = Object.values(state).filter(Boolean).length;
+  const pct = Math.round((done / total) * 100);
+  try {
+    await setDoc(doc(db, "checklists", DOC_ID, "history", todayKey), {
+      date: todayKey,
+      completed: done,
+      total: total,
+      percentage: pct,
+      tasks: { ...state },
+      timestamp: serverTimestamp()
+    });
+  } catch(e) { console.error("Archive failed:", e); }
+}
+
+let num = 0;
+sections.forEach(sec => {
+  const secDiv = document.createElement('div');
+  const label = document.createElement('div');
+  label.className = 'section-label';
+  label.textContent = sec.label;
+  secDiv.appendChild(label);
+
+  sec.tasks.forEach(task => {
+    num++;
+    const row = document.createElement('div');
+    row.className = 'task-row';
+    row.id = 'row-' + task.id;
+    row.innerHTML = `<div class="num">${num}</div><div class="check-box"></div><div><div class="task-text">${task.text}</div>${task.note ? `<div class="task-note">${task.note}</div>` : ''}</div>`;
+    row.addEventListener('click', () => {
+      state[task.id] = !state[task.id];
+      applyState();
+      saveState();
+    });
+    secDiv.appendChild(row);
+  });
+  listEl.appendChild(secDiv);
+});
+
+document.getElementById('reset-btn').addEventListener('click', async () => {
+  allTasks.forEach(t => { state[t.id] = false; });
+  applyState();
+  await saveState();
+});
+
+// ===== STATISTICS =====
+function getTodayKey() {
+  return new Date().toISOString().split('T')[0];
+}
+
+async function loadHistory() {
+  try {
+    const q = query(historyRef, orderBy("date", "desc"), limit(60));
+    const snap = await getDocs(q);
+    historyData = [];
+    snap.forEach(d => historyData.push(d.data()));
+    historyData.sort((a, b) => a.date.localeCompare(b.date));
+  } catch(e) { console.error(e); }
+}
+
+function renderStats() {
+  if (historyData.length === 0) {
+    document.getElementById('stat-total-days').textContent = '0';
+    document.getElementById('stat-avg-completion').textContent = '0%';
+    document.getElementById('stat-best-day').textContent = '0%';
+    document.getElementById('stat-best-date').textContent = '—';
+    document.getElementById('stat-current-streak').textContent = '0';
+    document.getElementById('streak-badge').style.display = 'none';
+    document.getElementById('weekly-chart').innerHTML = '<div class="empty-state">No history yet. Complete tasks today to start tracking.</div>';
+    document.getElementById('section-breakdown').innerHTML = '<div class="empty-state">Complete tasks to see section breakdown.</div>';
+    return;
+  }
+
+  // Total days
+  document.getElementById('stat-total-days').textContent = historyData.length;
+
+  // Average completion
+  const avg = Math.round(historyData.reduce((s, h) => s + h.percentage, 0) / historyData.length);
+  document.getElementById('stat-avg-completion').textContent = avg + '%';
+
+  // Best day
+  const best = historyData.reduce((a, b) => a.percentage > b.percentage ? a : b);
+  document.getElementById('stat-best-day').textContent = best.percentage + '%';
+  document.getElementById('stat-best-date').textContent = new Date(best.date + 'T00:00:00').toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' });
+
+  // Current streak
+  let streak = 0;
+  const today = getTodayKey();
+  const dates = historyData.map(h => h.date);
+  // Check if today is in history or if yesterday was the last
+  let checkDate = new Date();
+  while (true) {
+    const key = checkDate.toISOString().split('T')[0];
+    const hist = historyData.find(h => h.date === key);
+    const doneToday = key === today ? Object.values(state).filter(Boolean).length > 0 : false;
+    if (hist && hist.percentage > 0) {
+      streak++;
+    } else if (key === today && doneToday) {
+      streak++;
+    } else {
+      break;
+    }
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+  document.getElementById('stat-current-streak').textContent = streak;
+  if (streak > 1) {
+    document.getElementById('streak-badge').style.display = 'inline-flex';
+    document.getElementById('streak-text').textContent = streak + ' day streak';
+  } else {
+    document.getElementById('streak-badge').style.display = 'none';
+  }
+
+  // Weekly chart (last 7 tracked days, or last 7 calendar days)
+  const chartEl = document.getElementById('weekly-chart');
+  chartEl.innerHTML = '';
+  const last7 = historyData.slice(-7);
+  if (last7.length === 0) {
+    chartEl.innerHTML = '<div class="empty-state">No data yet</div>';
+  } else {
+    const maxPct = Math.max(...last7.map(h => h.percentage), 1);
+    last7.forEach(h => {
+      const group = document.createElement('div');
+      group.className = 'bar-group';
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.style.height = Math.max((h.percentage / maxPct) * 100, 4) + '%';
+      const val = document.createElement('div');
+      val.className = 'bar-value';
+      val.textContent = h.percentage + '%';
+      const lbl = document.createElement('div');
+      lbl.className = 'bar-label';
+      lbl.textContent = new Date(h.date + 'T00:00:00').toLocaleDateString('en-ZA', { weekday: 'short' });
+      group.appendChild(val);
+      group.appendChild(bar);
+      group.appendChild(lbl);
+      chartEl.appendChild(group);
+    });
+  }
+
+  // Section breakdown
+  const breakdownEl = document.getElementById('section-breakdown');
+  breakdownEl.innerHTML = '';
+  sections.forEach(sec => {
+    const secTasks = sec.tasks.map(t => t.id);
+    let totalDone = 0, totalPossible = 0;
+    historyData.forEach(h => {
+      secTasks.forEach(tid => {
+        totalPossible++;
+        if (h.tasks && h.tasks[tid]) totalDone++;
+      });
+    });
+    const pct = totalPossible > 0 ? Math.round((totalDone / totalPossible) * 100) : 0;
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML = `<div class="breakdown-name">${sec.label}</div><div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${pct}%"></div></div><div class="breakdown-pct">${pct}%</div>`;
+    breakdownEl.appendChild(row);
+  });
+}
+
+// ===== REPORTS =====
+function renderReports() {
+  const histEl = document.getElementById('history-list');
+  if (historyData.length === 0) {
+    histEl.innerHTML = '<div class="empty-state">No history recorded yet. Complete and save tasks to build your report.</div>';
+  } else {
+    histEl.innerHTML = '';
+    const recent = [...historyData].reverse().slice(0, 30);
+    recent.forEach(h => {
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      const barClass = h.percentage >= 80 ? 'good' : h.percentage >= 50 ? 'mid' : 'low';
+      item.innerHTML = `<div class="history-date">${new Date(h.date + 'T00:00:00').toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' })}</div><div class="history-bar-bg"><div class="history-bar ${barClass}" style="width:${h.percentage}%"></div></div><div class="history-pct">${h.percentage}%</div>`;
+      histEl.appendChild(item);
+    });
+  }
+
+  // Task rankings
+  const rankEl = document.getElementById('task-rankings');
+  const taskCounts = {};
+  allTasks.forEach(t => taskCounts[t.id] = 0);
+  let totalDays = historyData.length;
+  historyData.forEach(h => {
+    allTasks.forEach(t => {
+      if (h.tasks && h.tasks[t.id]) taskCounts[t.id]++;
+    });
+  });
+  const sorted = allTasks.map(t => ({ ...t, count: taskCounts[t.id], pct: totalDays > 0 ? Math.round((taskCounts[t.id] / totalDays) * 100) : 0 }))
+    .sort((a, b) => b.pct - a.pct);
+
+  if (totalDays === 0) {
+    rankEl.innerHTML = '<div class="empty-state">No data yet</div>';
+  } else {
+    rankEl.innerHTML = '';
+    // Top 3
+    const topLabel = document.createElement('div');
+    topLabel.className = 'section-label';
+    topLabel.textContent = 'Most Completed';
+    rankEl.appendChild(topLabel);
+    sorted.slice(0, 5).forEach(t => {
+      const row = document.createElement('div');
+      row.className = 'task-detail-row';
+      row.innerHTML = `<div class="task-detail-name">${t.text}</div><div class="task-detail-bar-wrap"><div class="task-detail-bar" style="width:${t.pct}%"></div></div><div class="task-detail-count">${t.pct}%</div>`;
+      rankEl.appendChild(row);
+    });
+    // Bottom 3
+    const botLabel = document.createElement('div');
+    botLabel.className = 'section-label';
+    botLabel.textContent = 'Least Completed';
+    botLabel.style.marginTop = '20px';
+    rankEl.appendChild(botLabel);
+    sorted.slice(-3).reverse().forEach(t => {
+      const row = document.createElement('div');
+      row.className = 'task-detail-row';
+      row.innerHTML = `<div class="task-detail-name">${t.text}</div><div class="task-detail-bar-wrap"><div class="task-detail-bar" style="width:${t.pct}%"></div></div><div class="task-detail-count">${t.pct}%</div>`;
+      rankEl.appendChild(row);
+    });
+  }
+
+  // Weekly summary
+  const summaryEl = document.getElementById('weekly-summary');
+  if (historyData.length === 0) {
+    summaryEl.innerHTML = '<div class="empty-state">No weekly data yet</div>';
+  } else {
+    summaryEl.innerHTML = '';
+    // Group by week
+    const weeks = {};
+    historyData.forEach(h => {
+      const d = new Date(h.date + 'T00:00:00');
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      const key = weekStart.toISOString().split('T')[0];
+      if (!weeks[key]) weeks[key] = { total: 0, count: 0, dates: [] };
+      weeks[key].total += h.percentage;
+      weeks[key].count++;
+      weeks[key].dates.push(h.date);
+    });
+    const weekKeys = Object.keys(weeks).sort().slice(-4);
+    weekKeys.forEach(wk => {
+      const w = weeks[wk];
+      const avg = Math.round(w.total / w.count);
+      const row = document.createElement('div');
+      row.className = 'breakdown-row';
+      const start = new Date(wk + 'T00:00:00');
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      const label = `${start.toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' })}`;
+      row.innerHTML = `<div class="breakdown-name">${label} <span style="color:#5a4f3e;font-size:11px;">(${w.count} days)</span></div><div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${avg}%"></div></div><div class="breakdown-pct">${avg}%</div>`;
+      summaryEl.appendChild(row);
+    });
+  }
+}
+
+// ===== FIREBASE LISTENERS =====
+onSnapshot(docRef, (snap) => {
+  if (ignoreSnapshot) return;
+  if (snap.exists()) {
+    state = snap.data().tasks || {};
+  } else {
+    allTasks.forEach(t => { state[t.id] = false; });
+  }
+  applyState();
+  setSyncState('synced');
+}, (err) => {
+  setSyncState('error');
+  console.error(err);
+});
+
+setSyncState('connecting');
+getDoc(docRef).then(async snap => {
+  if (snap.exists()) {
+    state = snap.data().tasks || {};
+  } else {
+    allTasks.forEach(t => { state[t.id] = false; });
+    await setDoc(docRef, { tasks: state, updatedAt: new Date().toISOString() });
+  }
+  applyState();
+  setSyncState('synced');
+  // Load history after initial state
+  await loadHistory();
+}).catch(() => setSyncState('error'));
+
+// Archive at midnight or on page unload
+window.addEventListener('beforeunload', () => {
+  archiveDay();
+});
+
+// Also archive periodically (every 5 min) and on visibility change
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') archiveDay();
+});
+</script>
+</body>
+</html>
